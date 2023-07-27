@@ -1,8 +1,8 @@
 version: '3.8'
 services:
   ros2:
-    container_name: ros2-container
-    image: ros2
+    container_name: ros-container
+    image: ros
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,11 +13,31 @@ services:
     stdin_open: true
     network_mode: host
     privileged: true
+    ulimits:
+      nofile:
+        hard: 524288
+        soft: 1024
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - $HOME/.Xauthority:/root/.Xauthority
       - /home/niklas/ros_2/src:/root/ros2_ws/
       - /home/niklas/ros_2/history/.bash_history:/root/.bash_history
     tty: true
-    command: tail -f /dev/null
+    command:
+      - bash
+      - -c
+      - |
+        source /opt/ros/noetic/setup.bash
+        source ~/catkin_ws/devel/setup.bash
+        roslaunch turtlebot3_gazebo turtlebot3_autorace_2020.launch&
+        sleep 2
+        roslaunch turtlebot3_bringup turtlebot3_remote.launch&
+        sleep 2
+        roslaunch turtlebot3_autorace_camera intrinsic_camera_calibration.launch&
+        sleep 2
+        roslaunch turtlebot3_autorace_camera extrinsic_camera_calibration.launch&
+        rqt_image_view
+
+
+
 
